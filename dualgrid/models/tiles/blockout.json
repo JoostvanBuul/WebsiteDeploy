@@ -1,0 +1,7 @@
+{
+    "glb": "blockout.glb",
+    "prefix": "Blockout",
+    "floorHeight": 1.5,
+    "textures": {},
+    "fallback": null
+}

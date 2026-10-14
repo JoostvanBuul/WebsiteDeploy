@@ -1,0 +1,10 @@
+{
+    "glb": "stonebricks.glb",
+    "prefix": "Stone",
+    "floorHeight": 1.534,
+    "textures": {
+        "albedo": "../../images/web/BricksAlbedo1.png",
+        "roughness": "../../images/web/BricksRoughness1.png"
+    },
+    "fallback": "blockout"
+}

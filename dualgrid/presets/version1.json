@@ -1,0 +1,156 @@
+{
+    "look": "version1",
+    "camera": {
+        "controller": "orbit",
+        "view": {
+            "target": [
+                15,
+                1.5,
+                15
+            ],
+            "yaw": 20,
+            "pitch": 52,
+            "distance": 40
+        }
+    },
+    "effects": {
+        "lighting": {
+            "skyColor": "#5a6478",
+            "groundColor": "#221a14",
+            "hemisphere": 0.4,
+            "keyColor": "#b4bfd8",
+            "key": 0.75,
+            "keyAzimuth": -35,
+            "keyElevation": 62,
+            "shadows": true,
+            "shadowSoftness": 4,
+            "shadowDarkness": 0.8,
+            "fillColor": "#6a4a3a",
+            "fill": 0.12
+        },
+        "background": {
+            "style": "radial",
+            "topColor": "#0b0d12",
+            "bottomColor": "#040506",
+            "centerColor": "#1c1e24",
+            "radialSize": 1.1
+        },
+        "fog": {
+            "enabled": true,
+            "color": "#07080b",
+            "density": 0,
+            "heightTop": -1,
+            "heightBottom": -7,
+            "heightDensity": 0.9
+        },
+        "diorama": {
+            "enabled": true,
+            "depth": 7,
+            "rimColor": "#6f7787",
+            "soilTop": "#6e5a4c",
+            "soilMiddle": "#574638",
+            "soilBottom": "#40342c",
+            "shadow": 0.7,
+            "sideLight": 0.15
+        },
+        "torches": {
+            "enabled": true,
+            "density": 0.25,
+            "spacing": 2.5,
+            "lights": 16,
+            "color": "#ff9440",
+            "intensity": 9,
+            "range": 11,
+            "flameGlow": 3.5,
+            "flicker": 0.2,
+            "blockSteps": 8
+        },
+        "crystals": {
+            "enabled": false,
+            "density": 0.08,
+            "color": "#ff2a3c",
+            "glow": 3,
+            "pulse": 0.4
+        },
+        "dust": {
+            "enabled": true,
+            "count": 3000,
+            "height": 0.8,
+            "size": 0.07,
+            "color": "#9a9996",
+            "brightness": 0.3,
+            "speed": 0.3
+        },
+        "editBurst": {
+            "enabled": true
+        },
+        "displacement": {
+            "enabled": false
+        },
+        "buildAnimation": {
+            "enabled": true,
+            "swapAt": "firstRise"
+        },
+        "surfaceColor": {
+            "enabled": true,
+            "mossColor": "#77767b",
+            "jointMoss": 1,
+            "jointDarkness": 0.25,
+            "groutDepth": 0.035,
+            "mossScale": 0.4,
+            "mossPatchiness": 0.6
+        },
+        "stylize": {
+            "enabled": true,
+            "top": 0,
+            "side": 0,
+            "bands": 0,
+            "bandMix": 0,
+            "rimColor": "#9fc4ff",
+            "rim": 0.25,
+            "rimPower": 8
+        },
+        "hoverHighlight": {
+            "enabled": true,
+            "color": "#ffc070",
+            "tint": 0.5,
+            "glow": 0.3,
+            "softness": 0.1
+        },
+        "hoverFrame": {
+            "enabled": false,
+            "color": "#c0bfbc",
+            "opacity": 0.75,
+            "onTop": false,
+            "inset": 0.15,
+            "lift": 0.1
+        },
+        "ambientOcclusion": {
+            "enabled": false,
+            "intensity": 1,
+            "tint": "#30303c",
+            "radius": 1.2
+        },
+        "glow": {
+            "enabled": true,
+            "strength": 1.5,
+            "radius": 0.25,
+            "threshold": 0
+        },
+        "toneMapping": {
+            "enabled": false,
+            "mode": "agx",
+            "exposure": 1.35
+        },
+        "colorGrade": {
+            "enabled": false,
+            "contrast": 1.08,
+            "saturation": 1.0,
+            "temperature": 0.08,
+            "shadowColor": "#33405e",
+            "shadowAmount": 0.15,
+            "highlightColor": "#ffb070",
+            "highlightAmount": 0.3
+        }
+    }
+}

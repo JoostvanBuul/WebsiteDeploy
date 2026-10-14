@@ -1,0 +1,31 @@
+{
+    "extends": "version2",
+    "look": "currentlow",
+    "render": {
+        "maxPixelRatio": 1
+    },
+    "effects": {
+        "dust": {
+            "enabled": false
+        },
+        "torches": {
+            "flicker": 0,
+            "lights": 6,
+            "onlyLit": true,
+            "blockSteps": 0,
+            "particles": false
+        },
+        "fxaa": {
+            "enabled": true
+        },
+        "glow": {
+            "enabled": false
+        },
+        "lighting": {
+            "shadows": false
+        },
+        "displacement": {
+            "enabled": false
+        }
+    }
+}

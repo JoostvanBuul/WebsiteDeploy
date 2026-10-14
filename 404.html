@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en-US">
+
+<head>
+    <meta charset="utf-8">
+    <base href="/">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Designated a title and description for the website -->
+    <title>Page not found | Joost van Buul</title>
+    <meta name="description" content="Joost van Buul's website containing his portfolio, blog and other things">
+    <meta name="author" content="Joost van Buul">
+    <meta name="robots" content="noindex">
+
+    <!-- Designated an images and description which is used when the website is linked on facebook CHECK: Also whatsapp?-->
+    <meta property="og:image" content="images/test-image.jpg" />
+    <!-- CHECK: what size this image should be, create said image -->
+    <meta property="og:description" content="The Mozilla Developer Network (MDN) provides
+information about Open Web technologies including HTML, CSS, and APIs for both websites
+and HTML Apps." />
+    <meta property="og:title" content="Joost van Buul's website" />
+
+    <!-- Icons, made by scripts/SSG.py from the image set as `icon` in
+         content/site.yaml -->
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
+
+    <link rel="preload" href="fonts/Squarely.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="styles/style.css">
+    <!-- Chrome/Edge: load a nav target in the background once it's hovered
+         (or pressed), header included, so clicking swaps in a finished page.
+         Other browsers ignore this and load pages as usual. -->
+    <script type="speculationrules">
+        {
+            "prerender": [{
+                "where": { "selector_matches": ".site-nav a:not([aria-current])" },
+                "eagerness": "moderate"
+            }]
+        }
+    </script>
+    <link rel="modulepreload" href="assets/three-IiZtSDkf.js">
+    <script type="module" src="assets/header-0zoD1Xa1.js"></script>
+    <script type="module" src="assets/app-DJGff7eD.js"></script>
+</head>
+
+<body>
+    <header class="site-header">
+        <h1 class="visually-hidden">Joost van Buul</h1>
+        <div id="header-viewer" aria-hidden="true">
+            <noscript>
+                <div class="header-fallback">
+                    <span>Joost</span>
+                    <span>Van Buul</span>
+                </div>
+            </noscript>
+        </div>
+    </header>
+
+    <div class="band">
+        <nav class="site-nav" aria-label="Primary navigation">
+            <ul>
+                <li>
+                    <span class="chevron end" data-rank="3" aria-hidden="true"></span>
+                    <span class="chevron end" data-rank="2" aria-hidden="true"></span>
+                    <span class="chevron end" data-rank="1" aria-hidden="true"></span>
+                    <a href="index.html">Blog</a>
+                </li>
+                <li>
+                    <span class="chevron" data-rank="2" aria-hidden="true"></span>
+                    <span class="chevron" data-rank="1" aria-hidden="true"></span>
+                    <a href="images.html">Gallery</a>
+                </li>
+                <li>
+                    <span class="chevron" data-rank="2" aria-hidden="true"></span>
+                    <span class="chevron" data-rank="1" aria-hidden="true"></span>
+                    <a href="projects.html">Projects</a>
+                </li>
+                <li>
+                    <span class="chevron" data-rank="2" aria-hidden="true"></span>
+                    <span class="chevron" data-rank="1" aria-hidden="true"></span>
+                    <a href="about.html">About</a>
+                    <span class="chevron end" data-rank="1" aria-hidden="true"></span>
+                    <span class="chevron end" data-rank="2" aria-hidden="true"></span>
+                    <span class="chevron end" data-rank="3" aria-hidden="true"></span>
+                </li>
+            </ul>
+        </nav>
+
+        <main>
+
+            <article class="card">
+                <p class="card-label">404</p>
+                <h2>404: Page not found</h2>
+                <p>There's nothing here</p>
+            </article>
+        </main>
+
+        <footer class="site-footer">
+            <ul class="social-links">
+                <li><a href="https://github.com/joostvanbuul" aria-label="GitHub"><svg aria-hidden="true"><use href="images/icons.svg#github"></use></svg></a></li>
+                <li><a href="mailto:joostvanbuul@gmail.com" aria-label="Email"><svg aria-hidden="true"><use href="images/icons.svg#mail"></use></svg></a></li>
+            </ul>
+            <p>© Copyright 2026 by Joost van Buul. All Rights Reserved.</p>
+        </footer>
+    </div>
+</body>
+
+</html>

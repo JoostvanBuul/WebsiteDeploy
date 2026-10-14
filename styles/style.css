@@ -1,0 +1,1239 @@
+/* =====================================================================
+   Site stylesheet
+
+   Look: a dark panel (a gradient band with a very subtle 1px edge) cut
+   into cyberpunk shapes (notched corners, raised and lowered tabs - after
+   .ref/cyberpunk-style.css) and printed Spider-Verse style (a halftone
+   dot screen in the page background).
+
+   The tab shape: blocks with tabs (the band and the cards) share one
+   outline - a raised tab on the left of the top edge and the same tab
+   turned 180 degrees (lowered, on the right) on the bottom edge. Only the
+   tabs have slanted ends; the other corners stay square. Each block sets
+   --tab-height and --tab-width, and --tab-shape turns those into the
+   polygon (declared per block, so it picks up that block's sizes).
+
+   Sections:
+     1. Palette & layout tokens
+     2. Fonts & base
+     3. Header (three.js canvas + no-WebGL fallback)
+     4. Band (the panel the page content sits on)
+     5. Navigation (arrow buttons + chevron runs)
+     6. Cards (notched/tabbed content blocks)
+     7. Blog
+     8. Gallery grid
+     9. Gallery modal & carousel
+    10. Projects
+    11. Footer
+    12. Motion
+   ===================================================================== */
+
+
+/* =====================================================================
+   1. PALETTE & LAYOUT TOKENS
+   ===================================================================== */
+
+:root {
+    /* The site palette. scripts/header.js reads these same properties
+       when it loads, so the header's shaders and the page share one set of
+       colors. Light/dark later: redefine only this block (for example under
+       [data-theme="light"] or a prefers-color-scheme query) - everything
+       below derives from these values instead of hard-coding colors. */
+    --site-bg: #0f1b26;
+    --site-panel: #334249;
+    --site-paper: #f5e8d1;
+    --site-accent: #20a5a6;
+    --site-highlight: #dd5639;
+    --site-ink: #121c25;
+    --site-shadow: rgba(15, 27, 38, 0.55);
+    /* The header's chromatic-aberration ghost colors. Only the header uses
+       them for now; they live here so the whole palette is in one place. */
+    --site-glitch-violet: #ff63db;
+    --site-glitch-blue: #00f2ff;
+
+    /* Derived tones. Mixed from the palette rather than written out, so a
+       theme swap carries them along automatically. */
+    --site-edge: color-mix(in srgb, var(--site-paper) 8%, transparent);         /* the band's subtle edge */
+    --site-edge-strong: color-mix(in srgb, var(--site-paper) 16%, transparent);
+    --site-text-muted: color-mix(in srgb, var(--site-paper) 62%, transparent);
+    --site-halftone: color-mix(in srgb, var(--site-paper) 10%, transparent);
+
+    /* Header geometry. The header renders with a fixed vertical framing, so
+       everything scales with its height: at full size the canvas is 420px
+       tall and the band starts at 300px (the spacing from the original
+       header prototype), and below that both shrink together. */
+    --header-height: min(55vw, 420px);
+    --band-top: calc(var(--header-height) * 0.7143);
+    /* Full width until only 0.75rem of background is left on either
+       side, then it keeps that margin. */
+    --band-width: min(760px, 100% - 1.5rem);
+    --band-padding: clamp(1rem, 4vw, 2.5rem);
+    --band-bottom-gap: 1.5rem; /* background left below the band's lowered tab */
+
+    /* The navigation and the demo's button. */
+    --font-display: "Squarely", "Inter", system-ui, sans-serif;
+    --font-body: "Space Grotesk", system-ui, sans-serif;
+    /* Headings and labels (h1-h3, the card labels, the About page's link
+       names). */
+    --font-heading: "Oxanium", var(--font-display);
+    --font-heading-weight: 700;
+}
+
+
+/* =====================================================================
+   2. FONTS & BASE
+   ===================================================================== */
+
+/* Squarely only has real glyphs for capitals, digits, "." and "-": its
+   lowercase letters and most symbols (<, >, /, ×) exist but are blank. The
+   unicode-range limits the font to the characters it actually draws, so
+   everything else falls through to Inter instead of disappearing. Text set
+   in Squarely is also uppercased (the navigation, the demo's button). */
+@font-face {
+    font-family: "Squarely";
+    src: url("../fonts/Squarely.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+    unicode-range: U+0020, U+002D-002E, U+0030-0039, U+0041-005A;
+}
+
+@font-face {
+    font-family: "Inter";
+    src: url("../fonts/Inter.ttf") format("truetype");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Inter";
+    src: url("../fonts/Inter-Italic.ttf") format("truetype");
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* The headings and labels (Oxanium) and the body text (Space Grotesk),
+   both variable fonts as woff2, SIL Open Font License (fonts/OFL-*.txt). Space
+   Grotesk has no italic, so the browser slants it. */
+@font-face {
+    font-family: "Oxanium";
+    src: url("../fonts/Oxanium-Variable.woff2") format("woff2");
+    font-weight: 200 800;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Space Grotesk";
+    src: url("../fonts/SpaceGrotesk-Variable.woff2") format("woff2");
+    font-weight: 300 700;
+    font-display: swap;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+}
+
+/* Always keep room for the vertical scrollbar, even on a page too short to
+   scroll. Otherwise, in browsers with classic (non-overlay) scrollbars, a
+   short page is a scrollbar wider than the others and everything centered
+   on it jumps sideways when changing pages. Overlay scrollbars take no
+   room, so there this does nothing. */
+html {
+    scrollbar-gutter: stable;
+}
+
+/* flow-root keeps the band's bottom margin inside the body. Without it the
+   margin collapses through the body's bottom edge on pages taller than the
+   window, and the halftone (body::before, sized to the body) stops that
+   far short of the bottom of the page. */
+body {
+    position: relative;
+    display: flow-root;
+    min-height: 100vh;
+    /* The header canvas is wider than the page (see section 3); clip it
+       instead of letting it add a horizontal scrollbar. */
+    overflow-x: hidden;
+    background: var(--site-bg);
+    color: var(--site-paper);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.65;
+}
+
+/* The halftone screen behind the whole page: two offset grids of dots,
+   which together form a lattice turned 45 degrees (the classic print
+   screen angle). A mask fades it from invisible at the top of the page to
+   fully visible at the bottom. z-index -1 puts it above the page
+   background but below everything else. */
+body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+        radial-gradient(circle, var(--site-halftone) 1.2px, transparent 1.7px),
+        radial-gradient(circle, var(--site-halftone) 1.2px, transparent 1.7px);
+    background-size: 8px 8px;
+    background-position: 0 0, 4px 4px;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000);
+    mask-image: linear-gradient(to bottom, transparent, #000);
+}
+
+h1,
+h2,
+h3 {
+    margin: 0 0 0.75rem;
+    font-family: var(--font-heading);
+    font-weight: var(--font-heading-weight);
+    line-height: 1.2;
+    letter-spacing: 0.04em;
+}
+
+h2 {
+    font-size: 1.45rem;
+}
+
+h3 {
+    font-size: 1.15rem;
+}
+
+p {
+    margin: 0 0 1rem;
+}
+
+a {
+    color: var(--site-accent);
+    text-underline-offset: 0.2em;
+}
+
+a:hover,
+a:focus-visible {
+    color: var(--site-highlight);
+}
+
+/* Present for screen readers and search engines, hidden visually: the
+   header canvas is the visible title. */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+
+/* =====================================================================
+   3. HEADER
+   The header's in-flow height is only --band-top, so the band starts
+   there; the canvas itself is --header-height tall and overhangs the top
+   of the band (the drifting planes reach just past the band's edge). It is
+   also far wider than the page so the planes can drift off the sides.
+   ===================================================================== */
+
+.site-header {
+    position: relative;
+    height: var(--band-top);
+}
+
+#header-viewer {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    z-index: 2;
+    width: min(220%, 1800px);
+    height: var(--header-height);
+    transform: translateX(-50%);
+    overflow: visible;
+}
+
+#header-viewer canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#header-viewer .header-fallback {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    color: var(--site-paper);
+    letter-spacing: 0.8rem;
+    font-size: clamp(1.6rem, 4vw, 4rem);
+    font-weight: 900;
+    text-align: center;
+    text-transform: uppercase;
+    background: radial-gradient(circle at center, color-mix(in srgb, var(--site-accent) 14%, transparent), transparent 60%), var(--site-bg);
+    border: 1px solid color-mix(in srgb, var(--site-paper) 18%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--site-accent) 26%, transparent);
+}
+
+#header-viewer .header-fallback span {
+    display: block;
+}
+
+
+/* =====================================================================
+   4. BAND
+   The panel that holds the page, in the shared tab shape (see the top of
+   this file). The band itself has no background, clip-path or z-index:
+   any of those would make it a stacking context and trap its children
+   below the header canvas (z-index 2). Instead its shape is painted by
+   two pseudo-elements - ::before in the edge color, ::after with the fill
+   inset 1px over it, which leaves the 1px edge showing along every side
+   and slant - and both paint under the canvas. The children are lifted
+   above the canvas (z-index 3) so the part of the canvas that overhangs
+   the band can't swallow clicks on the navigation or content.
+   ===================================================================== */
+
+.band,
+.card {
+    --tab-shape: polygon(
+        0 var(--tab-height),
+        var(--tab-height) 0,
+        var(--tab-width) 0,
+        calc(var(--tab-width) + var(--tab-height)) var(--tab-height),
+        100% var(--tab-height),
+        100% calc(100% - var(--tab-height)),
+        calc(100% - var(--tab-height)) 100%,
+        calc(100% - var(--tab-width)) 100%,
+        calc(100% - var(--tab-width) - var(--tab-height)) calc(100% - var(--tab-height)),
+        0 calc(100% - var(--tab-height))
+    );
+}
+
+.band {
+    --tab-height: 1.5rem;
+    --tab-width: 35%;
+    /* Space from the band's top edge to the nav, and the same again from
+       the nav to the page content. */
+    --nav-gap: 1.1rem;
+
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: var(--band-width);
+    min-height: calc(100vh - var(--band-top) - var(--band-bottom-gap));
+    margin: 0 auto var(--band-bottom-gap);
+    padding: calc(var(--tab-height) + var(--nav-gap)) var(--band-padding) var(--tab-height);
+    box-shadow: 0 28px 60px var(--site-shadow);
+}
+
+.band::before,
+.band::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    clip-path: var(--tab-shape);
+}
+
+.band::before {
+    background: var(--site-edge);
+}
+
+.band::after {
+    inset: 1px;
+    /* From the see-through gray at the top to a darker gray at the bottom:
+       halfway between --site-panel and --site-bg (the share of panel sets
+       how close it stays to the gray; it used to end on --site-bg itself),
+       and a little more opaque. */
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--site-panel) 80%, transparent),
+        color-mix(in srgb, color-mix(in srgb, var(--site-panel) 40%, var(--site-bg)) 88%, transparent)
+    );
+}
+
+.band > * {
+    position: relative;
+    z-index: 3;
+}
+
+.band > main {
+    flex: 1;
+    padding: var(--nav-gap) 0 3rem;
+}
+
+
+/* =====================================================================
+   5. NAVIGATION
+   A row of arrow-shaped buttons with chevrons before, between and after
+   them. At the band's full width:
+       |> > > [BLOG> > > [GALLERY> > > [PROJECTS> > > [ABOUT> > > >|
+   Buttons and chevrons are the same shape (--arrow-shape): a notched
+   left end and a pointed right end with the same slope (--tip). So each
+   piece can slide into the notch of the piece before it, overlapping by
+   --tip minus --chevron-gap, which leaves exactly --chevron-gap between
+   the slanted edges of every neighbor. The outermost chevron at each end
+   is a block with a flat outer side that stretches to the nav's edge.
+
+   The chevrons are written into the markup: 3 before the first button
+   (class "end"), 2 before each of the others, 3 after the last (class
+   "end"). data-rank is a chevron's distance from its button (1 = next to
+   it). There is no script: everything is in the HTML from the first
+   paint, so changing pages doesn't show the row being built. As the nav
+   narrows, the container queries at the end of this section take one
+   chevron off every longest run (3,2,2,2,3 -> 2,2,2,2,2 -> 1,1,1,1,1 ->
+   1,0,0,0,1), and below that the buttons become a 2 x 2 grid of plain
+   rectangles.
+   ===================================================================== */
+
+.site-nav {
+    --nav-height: 2.5rem;
+    --tip: calc(var(--nav-height) * 0.375);   /* depth of the point and notch */
+    --chevron-gap: 0.2rem;
+    /* Horizontal width of a chevron's stroke. Chosen so the full row (3, 2,
+       2, 2, 3 chevrons) just fits the nav at the band's full width (680px):
+           thickness = (680 - buttons + 3 * tip - 15 * gap) / 12
+       where "buttons" is the four buttons' widths added up, currently
+       531.6px; the end blocks take up whatever is left over. Recalculate
+       this if the font changes, and the container query widths below. */
+    --chevron-thickness: 0.75rem;
+    --tail-border: 3.5px; /* horizontal width; reads as ~2.8px across the slant */
+    --arrow-shape: polygon(
+        0 0,
+        calc(100% - var(--tip)) 0,
+        100% 50%,
+        calc(100% - var(--tip)) 100%,
+        0 100%,
+        var(--tip) 50%
+    );
+    /* The end blocks: the arrow shape with a flat left (start) or right
+       (end) side. */
+    --start-block-shape: polygon(
+        0 0,
+        calc(100% - var(--tip)) 0,
+        100% 50%,
+        calc(100% - var(--tip)) 100%,
+        0 100%
+    );
+    --end-block-shape: polygon(0 0, 100% 0, 100% 100%, 0 100%, var(--tip) 50%);
+
+    /* The container queries below measure the nav's own width. */
+    container: site-nav / inline-size;
+    font-family: var(--font-display);
+}
+
+/* The left padding cancels the overlap of the row's first piece (see the
+   next rule), so the start block's flat side lands on the nav's edge. */
+.site-nav ul {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0 0 0 calc(var(--tip) - var(--chevron-gap));
+    list-style: none;
+}
+
+.site-nav li {
+    display: flex;
+    flex: none;
+    align-items: center;
+}
+
+/* The overlap: every piece slides into the one before it. Chevrons the
+   container queries hide (display: none) take their margin with them, so
+   the pieces that stay close up by themselves. */
+.site-nav li > * {
+    margin-left: calc(var(--chevron-gap) - var(--tip));
+}
+
+.site-nav .chevron {
+    position: relative;
+    flex: none;
+    width: calc(var(--chevron-thickness) + var(--tip));
+    height: var(--nav-height);
+    background: var(--site-ink);
+    clip-path: var(--arrow-shape);
+}
+
+/* The fill, laid 1px inside the chevron in the chevron's own shape
+   (clip-path: inherit follows whatever shape it currently has). On a plain
+   chevron it matches the background, so nothing shows; the end blocks
+   switch their background to the edge color, which leaves a 1px outline
+   around the fill, the same one the cards have (section 6). */
+.site-nav .chevron::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    background: var(--site-ink);
+    clip-path: inherit;
+}
+
+/* The end blocks: the outermost visible chevron at each end is a block
+   with a flat outer side and a 1px outline, and grows to fill whatever
+   width the row leaves over, so the row always runs from edge to edge of
+   the nav. The first and last list items grow with them (evenly, so any
+   spare width is split between the two ends). At full width the blocks are the rank-3 end
+   chevrons; the container queries below hand the role inward as they hide
+   chevrons. */
+.site-nav li:first-child,
+.site-nav li:last-child {
+    flex-grow: 1;
+}
+
+.site-nav li:first-child > .end[data-rank="3"] {
+    flex-grow: 1;
+    clip-path: var(--start-block-shape);
+    background: var(--site-edge-strong);
+}
+
+.site-nav li:last-child > .end[data-rank="3"] {
+    flex-grow: 1;
+    clip-path: var(--end-block-shape);
+    background: var(--site-edge-strong);
+}
+
+.site-nav a {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: var(--nav-height);
+    padding: 0.1em calc(var(--tip)) 0.22rem calc(var(--tip) + 0.3em);
+    color: var(--site-paper);
+    background: var(--site-ink);
+    font-size: 2rem;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    text-transform: uppercase;
+    white-space: nowrap;
+    clip-path: var(--arrow-shape);
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* The current page's button gets an accent "border" along its tail notch:
+   a thin V that follows the notch's inner edge (after the blue edge on the
+   reference's red corner tags). */
+.site-nav a[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: calc(var(--tip) + var(--tail-border));
+    background: var(--site-accent);
+    clip-path: polygon(
+        0 0,
+        var(--tail-border) 0,
+        100% 50%,
+        var(--tail-border) 100%,
+        0 100%,
+        calc(100% - var(--tail-border)) 50%
+    );
+}
+
+.site-nav a:hover,
+.site-nav a:focus-visible {
+    color: var(--site-ink);
+    background: var(--site-accent);
+    outline: none; /* clip-path would cut an outline off; the fill change marks focus instead */
+}
+
+.site-nav a:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+}
+
+.site-nav a[aria-current="page"] {
+    color: var(--site-ink);
+    background: var(--site-highlight);
+}
+
+/* Fitting the row. Each width below is the narrowest nav the row still
+   fits in with that many chevrons (n), without the end blocks stretching:
+       buttons + n * (thickness + tip) - (n + 3) * (tip - gap)
+   with the buttons at 531.6px (see --chevron-thickness), converted to rem
+   and rounded up. The row stays on one line until 1,0,0,0,1 no longer
+   fits. Recalculate these whenever the labels, the nav font or any of
+   the sizes above change. */
+
+/* 3,2,2,2,3 (12 chevrons) needs 678.6px: below it, the rank-3 end
+   chevrons go and the rank-2 ones become the end blocks. */
+@container site-nav (width < 42.42rem) {
+    .site-nav .end[data-rank="3"] {
+        display: none;
+    }
+
+    .site-nav li:first-child > .end[data-rank="2"] {
+        flex-grow: 1;
+        clip-path: var(--start-block-shape);
+        background: var(--site-edge-strong);
+    }
+
+    .site-nav li:last-child > .end[data-rank="2"] {
+        flex-grow: 1;
+        clip-path: var(--end-block-shape);
+        background: var(--site-edge-strong);
+    }
+}
+
+/* 2,2,2,2,2 (10 chevrons) needs 648.2px: below it, every rank-2 chevron
+   goes and the rank-1 end chevrons become the end blocks. */
+@container site-nav (width < 40.52rem) {
+    .site-nav .chevron[data-rank="2"] {
+        display: none;
+    }
+
+    .site-nav li:first-child > .end[data-rank="1"] {
+        flex-grow: 1;
+        clip-path: var(--start-block-shape);
+        background: var(--site-edge-strong);
+    }
+
+    .site-nav li:last-child > .end[data-rank="1"] {
+        flex-grow: 1;
+        clip-path: var(--end-block-shape);
+        background: var(--site-edge-strong);
+    }
+}
+
+/* 1,1,1,1,1 (5 chevrons) needs 572.2px: below it, only the two end blocks
+   stay. */
+@container site-nav (width < 35.77rem) {
+    .site-nav .chevron:not(.end) {
+        display: none;
+    }
+}
+
+/* 1,0,0,0,1 (2 chevrons) needs 526.6px: below it, too narrow for one row.
+   The chevrons go and the buttons become plain rectangles in a 2 x 2 grid
+   that fills the nav, the same width as the blog posts below it. */
+@container site-nav (width < 32.92rem) {
+    .site-nav .chevron {
+        display: none;
+    }
+
+    .site-nav ul {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        padding-left: 0;
+    }
+
+    .site-nav li > * {
+        margin-left: 0;
+    }
+
+    /* The label is centered, so the side padding is only the minimum room
+       around the longest label; the extra 0.08em on the left balances the
+       letter-spacing after the last letter. */
+    .site-nav a {
+        flex: 1;
+        justify-content: center;
+        padding-right: 0.25em;
+        padding-left: calc(0.25em + 0.08em);
+        clip-path: none;
+    }
+
+    /* With the notch gone, the current page's accent edge becomes a
+       straight bar down the left side. */
+    .site-nav a[aria-current="page"]::before {
+        width: var(--tail-border);
+        clip-path: none;
+    }
+}
+
+/* The smallest phones: two PROJECTS-wide columns at 2rem need 297px, which
+   the nav only gets from a 353px-wide screen. */
+@media (max-width: 352px) {
+    .site-nav a {
+        font-size: 1.75rem;
+    }
+}
+
+
+/* =====================================================================
+   6. CARDS
+   Content blocks in the shared tab shape (see the top of this file): the
+   lowered bottom tab holds a small label. The 1px edge is drawn by giving the
+   card itself the edge color and laying the fill over it on a ::before
+   inset by 1px with the same shape - a border or box-shadow would be cut
+   off by the clip-path.
+   ===================================================================== */
+
+.card {
+    --tab-height: 1.5rem;
+    /* Wide enough for the longest label, but never wider than the card
+       leaves room for. Interlocking blog posts override this (section 7). */
+    --tab-width: min(max(45%, 19.5rem), calc(100% - var(--tab-height) - 1rem));
+
+    position: relative;
+    isolation: isolate;
+    /* The top and bottom padding each clear a tab; the bottom one holds
+       the label (.card-label). */
+    padding: calc(var(--tab-height) + 0.8rem) 1.5rem calc(var(--tab-height) + 1.5rem);
+    background: var(--site-edge-strong);
+    clip-path: var(--tab-shape);
+}
+
+.card::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    z-index: -1;
+    background: var(--site-bg);
+    clip-path: var(--tab-shape);
+}
+
+/* The label that sits in the bottom tab, centered in it. It is positioned
+   against the card itself, so the tab's percentages resolve against the
+   card's full width, as they do in --tab-shape. The box spans the whole
+   tab and the side padding keeps the text off both slanted ends; the text
+   sits 3px above the card's bottom edge so it looks centered in the tab. */
+.card-label {
+    position: absolute;
+    right: 0;
+    bottom: 3px;
+    width: calc(var(--tab-width) + var(--tab-height));
+    height: var(--tab-height);
+    margin: 0;
+    padding: 0 var(--tab-height);
+    overflow: hidden;
+    color: var(--site-accent);
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    line-height: var(--tab-height);
+    text-align: center;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.card > :last-child {
+    margin-bottom: 0;
+}
+
+@media (max-width: 480px) {
+    .card-label {
+        font-size: 0.68rem;
+        letter-spacing: 0.02em;
+    }
+}
+
+
+/* =====================================================================
+   7. BLOG
+   Posts sit --post-gap apart. When the list is wide enough, they
+   interlock: each post is pulled up by one tab height, so the previous
+   post's lowered tab (bottom right) drops down beside this post's raised
+   tab (top left). The tab width is then set so the two tabs' facing
+   slants are also --post-gap apart: for 45-degree slants that works out
+   to half of (100% - tab height - (sqrt 2 - 1) x gap), i.e. 0.41 x gap.
+   The list is a size container so the switch depends on the list's own
+   width (41rem is where the longest label still fits in the narrower
+   tab), not on the window's.
+   ===================================================================== */
+
+.blog-posts {
+    --post-gap: 0.75rem;
+
+    container-type: inline-size;
+}
+
+.post + .post {
+    margin-top: var(--post-gap);
+}
+
+/* A post's thumbnails: a row that wraps, with the gallery grid's 16px gap.
+   Each one opens the post's own lightbox (scripts/app.js). */
+.post-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+@container (min-width: 41rem) {
+    .post {
+        --tab-width: calc((100% - var(--tab-height) - 0.41 * var(--post-gap)) / 2);
+    }
+
+    .post + .post {
+        margin-top: calc(var(--post-gap) - var(--tab-height));
+    }
+}
+
+
+/* =====================================================================
+   8. GALLERY GRID
+   Fixed 150px columns (the thumbnail size from SSG.py) with the original
+   16px gap, as many per row as fit, centered in the band.
+   ===================================================================== */
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 150px);
+    justify-content: center;
+    gap: 16px;
+}
+
+/* The gallery's sections (gallery.html): each is a grid, its title in the
+   first row spanning every column, so the title starts where the
+   section's first thumbnail does. */
+.gallery-section > h2 {
+    grid-column: 1 / -1;
+    margin: 0;
+}
+
+.gallery-section + .gallery-section {
+    margin-top: 2.5rem;
+}
+
+/* A thumbnail is a frame element (a <button> in the gallery, a link in a
+   post) with the image inside. The frame's background, showing through its
+   padding, is the border; the frame and the image are both cut with the
+   same corner cuts, the image's slightly smaller so the border runs along
+   the slants at the same thickness as the straight sides (a 45-degree
+   border of thickness f needs the inner cut (2 - sqrt 2) x f smaller).
+   On hover or focus only the border color changes. The Projects page's
+   demo poster (section 10) has the same frame. */
+.thumbnail,
+.landscape-demo {
+    --thumb-cut: 0.9rem;
+    --thumb-frame: 3px;
+
+    display: block;
+    margin: 0;
+    padding: var(--thumb-frame);
+    border: 0;
+    background: var(--site-edge-strong);
+    cursor: pointer;
+    clip-path: polygon(
+        var(--thumb-cut) 0,
+        100% 0,
+        100% calc(100% - var(--thumb-cut)),
+        calc(100% - var(--thumb-cut)) 100%,
+        0 100%,
+        0 var(--thumb-cut)
+    );
+    transition: background-color 0.15s ease;
+}
+
+.thumbnail {
+    width: 150px;
+    height: 150px;
+}
+
+.thumbnail img,
+.landscape-demo img {
+    --inner-cut: calc(var(--thumb-cut) - 0.59 * var(--thumb-frame));
+
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    clip-path: polygon(
+        var(--inner-cut) 0,
+        100% 0,
+        100% calc(100% - var(--inner-cut)),
+        calc(100% - var(--inner-cut)) 100%,
+        0 100%,
+        0 var(--inner-cut)
+    );
+}
+
+.thumbnail:hover,
+.thumbnail:focus-visible,
+.landscape-demo:hover,
+.landscape-demo:focus-visible {
+    background: var(--site-highlight);
+    outline: none; /* clip-path would cut an outline off; the border color marks focus */
+}
+
+
+/* =====================================================================
+   9. GALLERY MODAL & CAROUSEL
+   The layout is unchanged from the earlier prototype. The carousel is
+   not a scroll container: scripts/carousel.js moves the .carousel strip
+   with a transform (and measures the .carouselthumb width and the gap),
+   and .carousel-container clips it. The modal sits above the header
+   canvas.
+   ===================================================================== */
+
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    padding-top: 20px;
+    overflow: auto;
+    background: var(--site-bg);
+}
+
+/* carousel.js opens the modal by adding .is-open. */
+.modal.is-open {
+    display: block;
+}
+
+/* While the modal is open the page behind it can't scroll: no page
+   scrollbar beside the modal, and the wheel can't move the page unseen.
+   Set on body, which hands its overflow on to the page's viewport. The
+   scrollbar's reserved gutter (see html) stays, in the same background
+   color as the modal, so nothing shifts. */
+body:has(.modal.is-open) {
+    overflow: hidden;
+}
+
+.modal-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+}
+
+.mySlides {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - 20px - 190px); /* top padding, carousel height and margins */
+    overflow: hidden;
+    text-align: center;
+}
+
+.modalimage {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    margin: auto 0;
+    object-fit: contain;
+    transform: translate(-50%, -50%);
+}
+
+/* The close/previous/next controls are plain text characters (×, <, >),
+   styled as in the earlier prototype, including its literal grey/white
+   colors. */
+.close,
+.prev,
+.next {
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: 0.3s ease;
+}
+
+.close {
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    z-index: 2;
+    color: #999;
+    font-size: 42px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: white;
+    text-decoration: none;
+}
+
+/* A larger invisible hit area around the close button. */
+.close::before {
+    content: "";
+    position: absolute;
+    inset: -20px -20px -100px -100px;
+    z-index: 1;
+}
+
+.prev,
+.next {
+    position: absolute;
+    top: 100px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    width: 40%;
+    height: 60%;
+    color: #999;
+    font-size: 36px;
+    font-weight: bold;
+}
+
+.next {
+    right: 20px;
+    left: auto;
+    justify-content: right;
+}
+
+.prev:hover,
+.next:hover {
+    color: white;
+}
+
+.numbertext {
+    position: absolute;
+    left: 20px;
+    visibility: hidden;
+    color: var(--site-paper);
+    font-size: 12px;
+}
+
+.carousel-container {
+    position: fixed;
+    bottom: 0;
+    width: 80%;
+    margin: 20px 0;
+    overflow: hidden;
+}
+
+/* touch-action: horizontal touch drags go to the script, which moves the
+   strip; vertical swipes still scroll the modal. user-select: dragging
+   across the thumbnails mustn't select them. */
+.carousel {
+    display: flex;
+    gap: 10px;
+    will-change: transform;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.carousel.is-dragging,
+.carousel.is-dragging .carouselthumb {
+    cursor: grabbing;
+}
+
+/* Middle-button autoscroll (see carousel.js). */
+.carousel.is-autoscrolling,
+.carousel.is-autoscrolling .carouselthumb {
+    cursor: ew-resize;
+}
+
+.carouselthumb {
+    flex-shrink: 0;
+    width: 150px;
+    height: 150px;
+    border: 2px solid var(--site-ink);
+    opacity: 0.8;
+    cursor: pointer;
+    transition: transform 0.3s ease, opacity 0.3s ease, border-color 0.3s ease;
+}
+
+.carouselthumb:hover {
+    opacity: 1;
+}
+
+.carouselthumb:focus {
+    outline: 2px solid var(--site-paper);
+}
+
+.carouselthumb.selected {
+    border-color: var(--site-highlight);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--site-accent) 70%, transparent);
+    opacity: 1;
+}
+
+/* A lightbox with a single image (a blog post's, see createModal in
+   carousel.js) has nothing to page through: no arrows and no strip, and
+   the image takes the strip's room too, keeping the top padding's 20px
+   below it. */
+.modal.is-single .gallery-control,
+.modal.is-single .next,
+.modal.is-single .carousel-container {
+    display: none;
+}
+
+.modal.is-single .mySlides {
+    height: calc(100vh - 40px);
+}
+
+
+/* =====================================================================
+   10. PROJECTS
+   ===================================================================== */
+
+/* The demo's poster, a button that opens the demo (scripts/app.js), in the
+   gallery thumbnails' frame (section 8), which also lights it on hover and
+   focus; the label in its middle lights with it. The poster is cropped to
+   a wide strip (object-fit in section 8 keeps its middle). */
+.landscape-demo {
+    position: relative;
+    width: 100%;
+    height: min(35vh, 300px);
+    min-height: 180px;
+}
+
+.landscape-demo span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    padding: 0.4rem 1rem;
+    background: var(--site-bg);
+    color: var(--site-paper);
+    font-family: var(--font-display);
+    font-size: 1rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transform: translate(-50%, -50%);
+    transition: background-color 0.15s ease;
+}
+
+.landscape-demo:hover span,
+.landscape-demo:focus-visible span {
+    background: var(--site-highlight);
+}
+
+/* The demo's modal: the gallery modal's full-page background, with the
+   demo filling the page inside a 20px margin and a 1px edge one step
+   lighter than the background, like the cards'. The demo needs a
+   positioned container that gets its size from CSS, and its canvas
+   filling it (DualgridTiles' websitehandoff.md); each start gets a fresh
+   .demo-host inside #landscape (scripts/app.js). */
+.demo-frame {
+    position: absolute;
+    inset: 20px;
+    border: 1px solid var(--site-edge-strong);
+}
+
+#landscape,
+#landscape > .demo-host {
+    position: absolute;
+    inset: 0;
+}
+
+#landscape canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* The close button floats over the demo's top right corner, which the demo
+   leaves free, and stays clear of the frame's edge. Thinner than the
+   gallery's (section 9), in the system font the demo's controls use; the
+   shadow keeps it readable over a light scene. Its enlarged hit area is
+   shrunk so it can't cover the demo's own controls. */
+.demo-frame > .close {
+    top: 10px;
+    right: 20px;
+    z-index: 3; /* above the demo's loading overlay (z-index 2) */
+    font: 300 36px/1 system-ui, sans-serif;
+    text-shadow: 0 0 6px var(--site-shadow);
+}
+
+.demo-frame > .close::before {
+    inset: -8px;
+}
+
+/* With ?debug the demo shows its debug panel in that same corner; it's
+   moved down to clear the close button. */
+#landscape .lil-gui.root {
+    margin-top: 52px;
+}
+
+
+/* =====================================================================
+   11. FOOTER
+   ===================================================================== */
+
+.site-footer {
+    padding: 1rem 0 1.25rem;
+    color: var(--site-text-muted);
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.site-footer p {
+    margin: 0;
+}
+
+/* Profile and mail links: a centered row of icons above the copyright line,
+   and a labelled list (.labelled) on the About page. The icons come from the
+   images/icons.svg sprite and draw in currentColor, so they take the link's
+   color: muted at rest, the site highlight on hover and focus, like the
+   thumbnails' frames. */
+.social-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0 0 0.5rem;
+    padding: 0;
+    list-style: none;
+}
+
+.social-links a {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.35rem;
+    color: var(--site-text-muted);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.social-links a:hover,
+.social-links a:focus-visible {
+    color: var(--site-highlight);
+}
+
+.social-links svg {
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* On the About page: one link per line, left-aligned, the name beside the
+   icon in the display font like the card labels. */
+.social-links.labelled {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    margin-bottom: 1rem;
+}
+
+.social-links.labelled a {
+    padding-left: 0;
+    color: var(--site-accent);
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.social-links.labelled a:hover,
+.social-links.labelled a:focus-visible {
+    color: var(--site-highlight);
+}
+
+
+/* =====================================================================
+   12. MOTION
+   The glitch skew from the reference buttons, only for visitors who
+   haven't asked for reduced motion (the header follows the same rule).
+   ===================================================================== */
+
+@media (prefers-reduced-motion: no-preference) {
+    .site-nav a:hover,
+    .site-nav a:focus-visible {
+        animation: nav-glitch 0.9s linear infinite;
+    }
+}
+
+@keyframes nav-glitch {
+    0%,
+    60% {
+        transform: skewX(0deg);
+    }
+
+    61%,
+    70% {
+        transform: skewX(10deg);
+    }
+
+    71%,
+    100% {
+        transform: skewX(0deg);
+    }
+}

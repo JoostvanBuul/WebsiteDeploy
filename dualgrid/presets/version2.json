@@ -1,0 +1,81 @@
+{
+    "extends": "version1",
+    "look": "version2",
+    "effects": {
+        "lighting": {
+            "skyColor": "#b7c5d6",
+            "groundColor": "#91471d",
+            "hemisphere": 0.4,
+            "keyColor": "#ccd7ef",
+            "key": 0.75,
+            "keyAzimuth": 30,
+            "keyElevation": 45,
+            "shadowSoftness": 0,
+            "shadowDarkness": 0.75,
+            "shadowMapSize": 512,
+            "fillColor": "#ffa348",
+            "fill": 0.4
+        },
+        "background": {
+            "topColor": "#000000",
+            "bottomColor": "#000000",
+            "centerColor": "#3d3846",
+            "curve": 1,
+            "radialSize": 1
+        },
+        "fog": {
+            "edgeStart": 0.8,
+            "edgeEnd": 1.75,
+            "edgeDensity": 0.75,
+            "mistDensity": 0
+        },
+        "diorama": {
+            "depth": 20,
+            "rimHeight": 1
+        },
+        "editBurst": {
+            "chunks": 20,
+            "chunkSize": 2.4,
+            "chunkLifetime": 1.2,
+            "force": 0.7,
+            "chipColor": "#8a909c",
+            "dustColor": "#c8c0b0",
+            "dust": 0.5,
+            "dustLifetime": 2.5
+        },
+        "lowerWalls": {
+            "mode": "clip",
+            "height": 0.5,
+            "capColor": "#4a505c",
+            "capStyle": "flat"
+        },
+        "torches": {
+            "flameGlow": 1.2,
+            "onlyLit": true,
+            "particles": true,
+            "particleCount": 12,
+            "particleLife": 1,
+            "particleRise": 0.6,
+            "particleSpread": 0.075,
+            "particleSway": 0.15,
+            "particleSize": 0.3,
+            "particleStartColor": "#ff9440",
+            "particleEndColor": "#a51d2d",
+            "particleBrightness": 2,
+            "particleGlow": 0.1
+        },
+        "displacement": {
+            "enabled": true,
+            "amount": 0.225,
+            "scale": 0.3,
+            "vertical": 1,
+            "detail": 0.1,
+            "detailScale": 2,
+            "atFoot": 1.2,
+            "atTop": 0.67,
+            "faceted": false,
+            "bumps": 0,
+            "bumpScale": 3
+        }
+    }
+}
