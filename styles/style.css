@@ -159,9 +159,6 @@ body {
     position: relative;
     display: flow-root;
     min-height: 100vh;
-    /* The header canvas is wider than the page (see section 3); clip it
-       instead of letting it add a horizontal scrollbar. */
-    overflow-x: hidden;
     background: var(--site-bg);
     color: var(--site-paper);
     font-family: var(--font-body);
@@ -241,9 +238,15 @@ a:focus-visible {
    also far wider than the page so the planes can drift off the sides.
    ===================================================================== */
 
+/* The canvas is clipped here, at the page's sides, so it can't widen the
+   page. overflow-x: hidden on body did that on desktop, but phone browsers
+   still widened the page to the canvas and let it scroll sideways. clip
+   (unlike hidden) leaves the other axis visible, so the canvas still
+   overhangs the band below. */
 .site-header {
     position: relative;
     height: var(--band-top);
+    overflow-x: clip;
 }
 
 #header-viewer {
